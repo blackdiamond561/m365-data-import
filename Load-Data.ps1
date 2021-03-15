@@ -9,16 +9,20 @@ param (
     [string]
     $WebUrl,
 
-    # The tilte of the list to load the data into
+    # The title of the list to load the data into
     [Parameter(Mandatory)]
     [string]
-    $ListTitle
+    $ListTitle,
+
+    # The key field to use to detect duplicates
+    [Parameter(Mandatory)]
+    [string]
+    $Key
 )
 
 PROCESS {
     $SourceData | ForEach-Object {
         $Data = $PSItem
-        $Key = $Data.Key
         $KeyValue = $Data.$Key
 
         $ListItemCollection = m365 spo listitem list --webUrl $WebUrl --title $ListTitle --camlQuery "<View><Query><Where><Eq><FieldRef Name='$Key' /><Value Type='Text'>$($Data.Title)</Value></Eq></Where></Query></View>" --output json | Join-String | ConvertFrom-Json -AsHashTable
