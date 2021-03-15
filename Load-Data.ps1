@@ -1,13 +1,18 @@
 [CmdletBinding(SupportsShouldProcess)]
 param (
+    # Data in the form of an array of hash tables, i.e. a CSV filed
     [Parameter(Mandatory, ValueFromPipeline)]
-    $SourceData
+    $SourceData,
+
+    # Parameter help description
+    [Parameter(Mandatory)]
+    [string]
+    $WebUrl
 )
 
 PROCESS {
     $SourceData | ForEach-Object {
         $Data = $PSItem
-        $WebUrl = $Data.WebUrl
         $ListTitle = $Data.ListTitle
         $Key = $Data.Key
         $KeyValue = $Data.$Key
@@ -15,7 +20,7 @@ PROCESS {
         $ListItemCollection = m365 spo listitem list --webUrl $WebUrl --title $ListTitle --camlQuery "<View><Query><Where><Eq><FieldRef Name='$Key' /><Value Type='Text'>$($Data.Title)</Value></Eq></Where></Query></View>" --output json | Join-String | ConvertFrom-Json -AsHashTable
 
         if ($ListItemCollection.length -eq 0) {
-            if ($PSCmdlet.ShouldProcess($KeyValue, "Add list item")) {
+            if ($PSCmdlet.ShouldProcess("$ListTitle $KeyValue", "Add list item")) {
                 $ListItemCollection = @(m365 spo listitem add --webUrl $WebUrl --listTitle $ListTitle --Title "$($Data.Title)" --output json | Join-String | ConvertFrom-Json -AsHashTable)
             }
         }
