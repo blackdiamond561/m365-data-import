@@ -4,16 +4,20 @@ param (
     [Parameter(Mandatory, ValueFromPipeline)]
     $SourceData,
 
-    # Parameter help description
+    # The URL of the web to load the data into
     [Parameter(Mandatory)]
     [string]
-    $WebUrl
+    $WebUrl,
+
+    # The tilte of the list to load the data into
+    [Parameter(Mandatory)]
+    [string]
+    $ListTitle
 )
 
 PROCESS {
     $SourceData | ForEach-Object {
         $Data = $PSItem
-        $ListTitle = $Data.ListTitle
         $Key = $Data.Key
         $KeyValue = $Data.$Key
 
