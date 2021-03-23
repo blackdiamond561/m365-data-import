@@ -1,6 +1,6 @@
 [CmdletBinding(SupportsShouldProcess)]
 param (
-    # Data in the form of an array of hash tables, i.e. a CSV filed
+    # Data in the form of an array of hash tables, i.e. a CSV with keys thata re internal names of fields in the target list
     [Parameter(Mandatory, ValueFromPipeline)]
     $SourceData,
 
@@ -21,6 +21,7 @@ param (
 )
 
 PROCESS {
+    $ErrorActionPreference = "Stop"
     $InformationPreference = "Continue"
 
     function Invoke-CLI {
@@ -60,26 +61,29 @@ PROCESS {
         $Data = $PSItem
         $KeyValue = $Data.$Key
 
-        $ListItemCollection = m365 spo listitem list --webUrl $WebUrl --title $ListTitle --camlQuery "<View><Query><Where><Eq><FieldRef Name='$Key' /><Value Type='Text'>$($Data.Title)</Value></Eq></Where></Query></View>" --output json | Join-String | ConvertFrom-Json -AsHashTable
+        $ListItemCollection = m365 spo listitem list --webUrl "$WebUrl" --title $ListTitle --camlQuery "<View><Query><Where><Eq><FieldRef Name='$Key' /><Value Type='Text'>$KeyValue</Value></Eq></Where></Query></View>" --output json | Join-String | ConvertFrom-Json -AsHashTable
 
         $DataCollection = $Data.PSObject.Properties |
             Foreach-Object {
-                Write-Output "--$($PSItem.Name) ""$($PSItem.Value)"""
+                if ($PSItem.Value.length -gt 0) {
+                    Write-Output "--$($PSItem.Name) ""$($PSItem.Value.trim())"""
+                }
             }
 
         if ($ListItemCollection.length -eq 0) {
             if ($PSCmdlet.ShouldProcess("$ListTitle $KeyValue", "Add list item")) {
-                $ListItemCollection = @(Invoke-CLI -Command:"m365 spo listitem add --webUrl $WebUrl --listTitle ""$ListTitle"" $DataCollection --output json" | Join-String | ConvertFrom-Json -AsHashTable)
+                $ListItemCollection = @(Invoke-CLI -Command:"m365 spo listitem add --webUrl ""$WebUrl"" --listTitle ""$ListTitle"" $DataCollection --output json" | Join-String | ConvertFrom-Json -AsHashTable)
             }
         }
-
+        else {
         $ListItemCollection | Foreach-Object {
             $ListItem = $PSItem
             $ID = $ListItem.ID
 
             if ($PSCmdlet.ShouldProcess("$ListTitle $ID", "Update list item")) {
-                $ListItem = Invoke-CLI -Command "m365 spo listitem set --webUrl $WebUrl --listTitle ""$ListTitle"" --id $ID $DataCollection --output json" | Join-String | ConvertFrom-Json -AsHashTable
+                $ListItem = Invoke-CLI -Command "m365 spo listitem set --webUrl ""$WebUrl"" --listTitle ""$ListTitle"" --id $ID $DataCollection --output json" | Join-String | ConvertFrom-Json -AsHashTable
             }
+        }
         }
     }
 }
