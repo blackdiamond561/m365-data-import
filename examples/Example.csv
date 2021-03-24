@@ -1,0 +1,5 @@
+"Title","CustomDate","Author0","Editor0"
+"UK Date","01/01/2019","Alan Brewer","Adam Barr"
+"Ambiguous Date","01/02/2019","Alan Brewer","Adam Barr"
+"ISO Date","02/02/19","Alan Brewer","Adam Barr"
+"ISO Date","2019-01-02T09:00:00.000000","Alan Brewer",""
